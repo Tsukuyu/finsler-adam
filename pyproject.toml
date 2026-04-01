@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "finsler-adam"
+version = "0.1.0"
+description = "Finsler-Adam: Asymmetric-metric optimizer with critical scaling gradient clipping for PyTorch"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.8"
+authors = [
+    {name = "Tsukuyu Laboratory"},
+]
+keywords = [
+    "optimizer", "deep-learning", "pytorch", "adamw",
+    "finsler-geometry", "gradient-clipping", "navier-stokes",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "torch>=1.13.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/tsukuyu-lab/finsler-adam"
+Documentation = "https://github.com/tsukuyu-lab/finsler-adam#readme"
+Repository = "https://github.com/tsukuyu-lab/finsler-adam"
+Issues = "https://github.com/tsukuyu-lab/finsler-adam/issues"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov",
+]
+examples = [
+    "torchvision>=0.14.0",
+    "transformers>=4.30.0",
+    "datasets>=2.14.0",
+    "wandb",
+]
+
+[tool.setuptools.packages.find]
+include = ["finsler_adam*"]

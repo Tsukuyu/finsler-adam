@@ -190,6 +190,6 @@ class FinslerAdam(Optimizer):
                         dim=p.numel(),
                         amplitude=group["zeta_amplitude"],
                     )
-                    p.add_(noise.view_as(p))
+                    p.add_(noise.to(p.device).view_as(p))
 
         return loss

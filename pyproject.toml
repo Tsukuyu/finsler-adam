@@ -10,7 +10,7 @@ readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.8"
 authors = [
-    {name = "Tsukuyu Laboratory"},
+    {name = "Tsukuyu"},
 ]
 keywords = [
     "optimizer", "deep-learning", "pytorch", "adamw",
@@ -33,10 +33,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/tsukuyu-lab/finsler-adam"
-Documentation = "https://github.com/tsukuyu-lab/finsler-adam#readme"
-Repository = "https://github.com/tsukuyu-lab/finsler-adam"
-Issues = "https://github.com/tsukuyu-lab/finsler-adam/issues"
+Homepage = "https://github.com/Tsukuyu/finsler-adam"
+Documentation = "https://github.com/Tsukuyu/finsler-adam#readme"
+Repository = "https://github.com/Tsukuyu/finsler-adam"
+Issues = "https://github.com/Tsukuyu/finsler-adam/issues"
 
 [project.optional-dependencies]
 dev = [

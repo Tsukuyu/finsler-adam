@@ -17,7 +17,7 @@
 set -e  # エラーで停止
 
 # ★ ここを自分のアカウント名に変更 ★
-GITHUB_USER="tsukuyu-lab"
+GITHUB_USER="Tsukuyu"
 REPO_NAME="finsler-adam"
 
 echo "============================================"

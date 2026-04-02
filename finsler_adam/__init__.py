@@ -11,7 +11,7 @@ Quick start:
 
     optimizer = FinslerAdam(model.parameters(), lr=1e-3)
 
-Paper: https://github.com/tsukuyu-lab/finsler-adam
+Paper: https://github.com/Tsukuyu/finsler-adam
 License: MIT
 """
 

@@ -22,7 +22,7 @@ pip install finsler-adam
 Or from source:
 
 ```bash
-git clone https://github.com/tsukuyu-lab/finsler-adam.git
+git clone https://github.com/Tsukuyu/finsler-adam.git
 cd finsler-adam
 pip install -e .
 ```
@@ -155,10 +155,10 @@ Training scripts for common benchmarks:
 ```bibtex
 @techreport{tsukuyu2026finsler,
   title   = {Finsler-Adam: An Asymmetric-Metric Optimizer with Critical Scaling Gradient Clipping},
-  author  = {Tsukuyu Laboratory},
+  author  = {Tsukuyu},
   year    = {2026},
   note    = {Preliminary Technical Report},
-  url     = {https://github.com/tsukuyu-lab/finsler-adam}
+  url     = {https://github.com/Tsukuyu/finsler-adam}
 }
 ```
 

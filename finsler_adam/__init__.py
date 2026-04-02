@@ -17,6 +17,7 @@ License: MIT
 
 from finsler_adam.optimizer import FinslerAdam
 from finsler_adam.anna_limit import anna_clip
+from finsler_adam.zeta_table import zeta_noise, get_zeros
 
-__version__ = "0.1.0"
-__all__ = ["FinslerAdam", "anna_clip"]
+__version__ = "0.2.0"
+__all__ = ["FinslerAdam", "anna_clip", "zeta_noise", "get_zeros"]

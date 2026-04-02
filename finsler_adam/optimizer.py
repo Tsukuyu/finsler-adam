@@ -1,5 +1,6 @@
 """
-FinslerAdam — Asymmetric-metric optimizer with critical scaling gradient clipping.
+FinslerAdam — Asymmetric-metric optimizer with critical scaling gradient clipping
+and zeta resonance exploration noise.
 
 Architecture:
     1. Anna-Limit clipping:  g ← g / (1 + α|g|^{4/3})     (if α > 0)
@@ -7,8 +8,9 @@ Architecture:
     3. Finsler scaling:      M_i = 1 + γ·sgn(v_i · m_i)    (if γ > 0)
     4. AdamW weight decay:   θ ← (1 − ηλ)θ
     5. Parameter update:     θ ← θ − η · M ⊙ m̂ / (√v̂ + ε)
+    6. Zeta resonance:       θ ← θ + ξ(t)                  (if zeta_enabled)
 
-When γ=0 and α=0, this reduces exactly to standard AdamW.
+When γ=0, α=0, and zeta_enabled=False, this reduces exactly to standard AdamW.
 """
 
 import math
@@ -36,13 +38,16 @@ def _anna_clip(grad: Tensor, alpha: float) -> Tensor:
 
 
 class FinslerAdam(Optimizer):
-    r"""Finsler-Adam: AdamW extended with asymmetric metric scaling and smooth clipping.
+    r"""Finsler-Adam: AdamW extended with asymmetric metric scaling, smooth clipping,
+    and zeta resonance exploration noise.
 
     .. math::
         M_i &= 1 + \gamma \cdot \mathrm{sgn}(v_i \cdot m_i) \\
         g_{\mathrm{clip}} &= g \,/\, (1 + \alpha\,|g|^{4/3}) \\
+        \xi_d(t) &= A \sum_{n=1}^{N} \frac{\sin(\gamma_n \ln(t+1) + d\pi/D)}{\sqrt{n}} \\
         \theta_{t+1} &= (1-\eta\lambda)\,\theta_t
                         - \eta\, M \odot \hat{m}_t \,/\, (\sqrt{\hat{v}_t} + \epsilon)
+                        + \xi(t)
 
     Args:
         params: Iterable of parameters to optimize.
@@ -55,6 +60,8 @@ class FinslerAdam(Optimizer):
             and recovers AdamW. Default: 0.5.
         anna_alpha (float): Anna-Limit clipping strength. 0 disables clipping.
             Default: 0.1.
+        zeta_enabled (bool): Enable zeta resonance exploration noise. Default: True.
+        zeta_amplitude (float): Amplitude of zeta noise. Default: 1e-4.
 
     Example::
 
@@ -66,9 +73,9 @@ class FinslerAdam(Optimizer):
         ...     optimizer.step()
 
     Note:
-        - ``gamma=0, anna_alpha=0`` → exact AdamW (drop-in replacement)
+        - ``gamma=0, anna_alpha=0, zeta_enabled=False`` → exact AdamW (drop-in replacement)
         - ``gamma=0, anna_alpha>0`` → AdamW + Anna-Limit safety (recommended first step)
-        - ``gamma>0, anna_alpha>0`` → Full Finsler-Adam
+        - ``gamma>0, anna_alpha>0, zeta_enabled=True`` → Full Finsler-Adam
     """
 
     def __init__(
@@ -80,6 +87,8 @@ class FinslerAdam(Optimizer):
         weight_decay: float = 0.01,
         gamma: float = 0.5,
         anna_alpha: float = 0.1,
+        zeta_enabled: bool = True,
+        zeta_amplitude: float = 1e-4,
     ):
         if not 0.0 <= lr:
             raise ValueError(f"Invalid learning rate: {lr}")
@@ -98,6 +107,8 @@ class FinslerAdam(Optimizer):
             lr=lr, betas=betas, eps=eps,
             weight_decay=weight_decay,
             gamma=gamma, anna_alpha=anna_alpha,
+            zeta_enabled=zeta_enabled,
+            zeta_amplitude=zeta_amplitude,
         )
         super().__init__(params, defaults)
 
@@ -170,5 +181,15 @@ class FinslerAdam(Optimizer):
                     p.addcmul_(exp_avg / denom, finsler_scale, value=-step_size)
                 else:
                     p.add_(exp_avg / denom, alpha=-step_size)
+
+                # ---- Zeta resonance noise ----
+                if group["zeta_enabled"]:
+                    from finsler_adam.zeta_table import zeta_noise
+                    noise = zeta_noise(
+                        step_count=step,
+                        dim=p.numel(),
+                        amplitude=group["zeta_amplitude"],
+                    )
+                    p.add_(noise.view_as(p))
 
         return loss

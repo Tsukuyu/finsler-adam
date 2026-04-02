@@ -4,8 +4,8 @@ build-backend = "setuptools.backends._legacy:_Backend"
 
 [project]
 name = "finsler-adam"
-version = "0.1.0"
-description = "Finsler-Adam: Asymmetric-metric optimizer with critical scaling gradient clipping for PyTorch"
+version = "0.2.0"
+description = "Finsler-Adam: Asymmetric-metric optimizer with critical scaling gradient clipping and zeta resonance for PyTorch"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.8"

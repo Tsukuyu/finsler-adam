@@ -30,7 +30,7 @@ class TestFinslerAdam:
         model_a = nn.Linear(5, 1)
 
         opt_f = FinslerAdam(model_f.parameters(), lr=1e-2, gamma=0.0, anna_alpha=0.0,
-                            weight_decay=0.01)
+                            zeta_enabled=False, weight_decay=0.01)
         opt_a = torch.optim.AdamW(model_a.parameters(), lr=1e-2, weight_decay=0.01)
 
         for _ in range(10):
@@ -42,7 +42,7 @@ class TestFinslerAdam:
             opt_a.zero_grad(); loss_a.backward(); opt_a.step()
 
         for pf, pa in zip(model_f.parameters(), model_a.parameters()):
-            assert torch.allclose(pf, pa, atol=1e-5), "gamma=0, alpha=0 should match AdamW"
+            assert torch.allclose(pf, pa, atol=1e-5), "gamma=0, alpha=0, zeta_off should match AdamW"
 
     def test_finsler_scaling_changes_behavior(self):
         """gamma>0 should produce different parameters than gamma=0."""
@@ -52,8 +52,10 @@ class TestFinslerAdam:
         torch.manual_seed(42)
         model1 = nn.Linear(5, 1)
 
-        opt0 = FinslerAdam(model0.parameters(), lr=1e-2, gamma=0.0, anna_alpha=0.0)
-        opt1 = FinslerAdam(model1.parameters(), lr=1e-2, gamma=0.5, anna_alpha=0.0)
+        opt0 = FinslerAdam(model0.parameters(), lr=1e-2, gamma=0.0, anna_alpha=0.0,
+                           zeta_enabled=False)
+        opt1 = FinslerAdam(model1.parameters(), lr=1e-2, gamma=0.5, anna_alpha=0.0,
+                           zeta_enabled=False)
 
         for _ in range(20):
             torch.manual_seed(_)
@@ -112,3 +114,67 @@ class TestFinslerAdam:
         loss.backward()
         with pytest.raises(RuntimeError, match="sparse"):
             opt.step()
+
+    def test_zeta_noise_changes_behavior(self):
+        """zeta_enabled=True should produce different params than zeta_enabled=False."""
+        from finsler_adam import FinslerAdam
+        torch.manual_seed(42)
+        model_z = nn.Linear(5, 1)
+        torch.manual_seed(42)
+        model_n = nn.Linear(5, 1)
+
+        opt_z = FinslerAdam(model_z.parameters(), lr=1e-2, gamma=0.0, anna_alpha=0.0,
+                            zeta_enabled=True, zeta_amplitude=0.01)
+        opt_n = FinslerAdam(model_n.parameters(), lr=1e-2, gamma=0.0, anna_alpha=0.0,
+                            zeta_enabled=False)
+
+        for _ in range(20):
+            torch.manual_seed(_)
+            x = torch.randn(8, 5)
+            for m, o in [(model_z, opt_z), (model_n, opt_n)]:
+                loss = m(x).pow(2).mean()
+                o.zero_grad(); loss.backward(); o.step()
+
+        params_differ = any(
+            not torch.allclose(p0, p1, atol=1e-6)
+            for p0, p1 in zip(model_z.parameters(), model_n.parameters())
+        )
+        assert params_differ, "zeta_enabled=True should diverge from zeta_enabled=False"
+
+    def test_zeta_table_values(self):
+        """Zeta zeros should match known values."""
+        from finsler_adam import get_zeros
+        zeros = get_zeros(10)
+        assert len(zeros) == 10
+        assert abs(zeros[0] - 14.1347) < 0.001
+        assert abs(zeros[1] - 21.0220) < 0.001
+
+    def test_zeta_noise_deterministic(self):
+        """Zeta noise should be deterministic for same step."""
+        from finsler_adam import zeta_noise
+        n1 = zeta_noise(step_count=42, dim=50)
+        n2 = zeta_noise(step_count=42, dim=50)
+        assert torch.allclose(n1, n2)
+
+    def test_reduces_to_adamw_with_zeta_off(self):
+        """gamma=0, anna_alpha=0, zeta_enabled=False should match AdamW exactly."""
+        from finsler_adam import FinslerAdam
+        torch.manual_seed(42)
+        model_f = nn.Linear(5, 1)
+        torch.manual_seed(42)
+        model_a = nn.Linear(5, 1)
+
+        opt_f = FinslerAdam(model_f.parameters(), lr=1e-2, gamma=0.0, anna_alpha=0.0,
+                            zeta_enabled=False, weight_decay=0.01)
+        opt_a = torch.optim.AdamW(model_a.parameters(), lr=1e-2, weight_decay=0.01)
+
+        for _ in range(10):
+            torch.manual_seed(_)
+            x = torch.randn(8, 5)
+            loss_f = model_f(x).pow(2).mean()
+            loss_a = model_a(x).pow(2).mean()
+            opt_f.zero_grad(); loss_f.backward(); opt_f.step()
+            opt_a.zero_grad(); loss_a.backward(); opt_a.step()
+
+        for pf, pa in zip(model_f.parameters(), model_a.parameters()):
+            assert torch.allclose(pf, pa, atol=1e-5), "All features off should match AdamW"
